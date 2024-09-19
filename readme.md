@@ -25,6 +25,8 @@ represented by the information at a specific index of these arrays:
 - `REG_SIZE_ARR`: Size in bytes of the register.
 - `REG_RDONLY_ARR`: If the register at a specified address is readonly (`1`) or read-write (`0`).
 
+In the Makefile, the `HEADERS`, `CC` and `CROSS-COMPILE` variables are
+overridable, to make compilator switching and header overriding more easy.
 
 ## Example configuration
 

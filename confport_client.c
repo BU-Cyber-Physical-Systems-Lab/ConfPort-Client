@@ -137,7 +137,7 @@ static inline int write_register(int index, char *value) {
   for (int i = 0; i < strlen(to_write); i++) {
     if (!((to_write[i] >= '0' && to_write[i] <= '9') ||
           (to_write[i] >= 'a' && to_write[i] <= 'f') ||
-          (to_write[i] >= 'A' && to_write[i] >= 'F'))) {
+          (to_write[i] >= 'A' && to_write[i] <= 'F'))) {
       printf("Error while writing in %s\n", reg_names[index]);
       printf("Invalid character %c in value 0x%s\n", to_write[i], to_write);
       return -1;

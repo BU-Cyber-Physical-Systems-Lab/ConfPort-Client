@@ -3,7 +3,7 @@ CC?=$(CROSS_COMPILE)gcc
 PGMS=confport_client
 
 SRCS=$(wildcard *.c)
-HEADERS=$(wildcard *.h)
+HEADERS?=$(wildcard *.h)
 OBJS=$(SRCS:.c=.o)
 CFLAGS+=-O2 -Wall -g
 
