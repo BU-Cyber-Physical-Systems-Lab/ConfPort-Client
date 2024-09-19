@@ -1,5 +1,5 @@
 CROSS_COMPILE?=aarch64-linux-gnu-
-CC=$(CROSS_COMPILE)gcc
+CC?=$(CROSS_COMPILE)gcc
 PGMS=confport_client
 
 SRCS=$(wildcard *.c)
