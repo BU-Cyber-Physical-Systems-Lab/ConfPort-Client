@@ -18,4 +18,7 @@
   { "pgd", "va", "pa", "offset", "active" }
 /// If the target memory is little endian
 #define MEM_LITTLE_ENDIAN 1
+/// `0` if register is can be written to, `1` if register is read only
+#define REG_RDONLY_ARR                                                           \
+  { 0, 0, 0, 0, 0 }
 #endif

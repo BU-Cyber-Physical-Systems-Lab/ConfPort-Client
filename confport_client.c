@@ -14,6 +14,8 @@
 static char *reg_names[CONFPORT_REGS_NUM] = REG_NAME_ARR;
 /// The size of the registers in bytes
 static size_t reg_sizes[CONFPORT_REGS_NUM] = REG_SIZE_ARR;
+/// The `1` if the register is read only, `0` otherwise, as an array
+static int reg_rdonly[CONFPORT_REGS_NUM] = REG_RDONLY_ARR;
 /// The confport
 static struct confport_t *confport;
 
@@ -119,8 +121,14 @@ static inline void print_register(int index) {
  * with an even number of characters and its size in bytes can be contained by
  * the selected register. If the value is less than the size of the register,
  * the function pads with 0s.
+ * Funtion will fail is the register is readonly.
  */
 static inline int write_register(int index, char *value) {
+  if (reg_rdonly[index] == 1) {
+    printf("Error while writing in %s\n", reg_names[index]);
+    printf("Register is read only\n");
+    return -1;
+  }
   // we get rid of  '0x' and '0X' if present
   char *to_write = (value[0] == '0' && (value[1] == 'x' || value[1] == 'X'))
                        ? value + 2
@@ -156,6 +164,7 @@ static inline int write_register(int index, char *value) {
   value_size = value_size / 2;
   char byte_to_write_str[3] = {'0', '0', '\0'};
   uint8_t byte_to_write;
+  int char_index = 0;
   if (value_size <= reg_sizes[index]) {
     // we start from the MSBs to the LSBs one byte at a time
     for (int i = reg_sizes[index] - 1; i >= 0; i--) {
@@ -163,8 +172,9 @@ static inline int write_register(int index, char *value) {
       // with
       // 0
       if (i < value_size) {
-        byte_to_write_str[0] = to_write[2 * i];
-        byte_to_write_str[1] = to_write[1 + (2 * i)];
+        char_index = value_size - i - 1;
+        byte_to_write_str[0] = to_write[2 * char_index];
+        byte_to_write_str[1] = to_write[1 + (2 * char_index)];
       }
       byte_to_write =
           (uint8_t)strtol((const char *)&byte_to_write_str, NULL, 16);
@@ -198,12 +208,18 @@ static inline int write_register(int index, char *value) {
 ///@param[in] name the name of the program
 static inline void help(char *name) {
   printf("Usage: %s [OPTION]...\n", name);
-  printf("If the option has an argument that value will be written in the "
-         "corresponding register, otherwise the register will be read.\n");
+  printf("If the option can take an argument, and the argument is given, \n"
+         "that value will be written in the "
+         "corresponding register.\n"
+         "Otherwise the register will be read.\n");
   printf("If no option is provided all registers will be read.\n");
   printf("Options:\n");
   for (int i = 0; i < CONFPORT_REGS_NUM; i++) {
-    printf("\t --%s [value]\n", reg_names[i]);
+    if (reg_rdonly[i] == 0) {
+      printf("\t --%s [value]\n", reg_names[i]);
+    } else {
+      printf("\t --%s \n", reg_names[i]);
+    }
   }
 }
 
@@ -216,7 +232,8 @@ int main(int argc, char **argv) {
   }
   for (int i = 0; i < CONFPORT_REGS_NUM; i++) {
     long_options[i].name = reg_names[i];
-    long_options[i].has_arg = optional_argument;
+    long_options[i].has_arg =
+        (reg_rdonly[i] == 0) ? optional_argument : no_argument;
     long_options[i].flag = NULL;
     long_options[i].val = i;
   }
@@ -243,7 +260,7 @@ int main(int argc, char **argv) {
     default:
       empty = 0;
       // https://cfengine.com/blog/2021/optional-arguments-with-getopt-long/
-      // optarg_long ignores optsion in the format --foo bar with optional
+      // optarg_long ignores options in the format --foo bar with optional
       // arguments
       if (optarg == NULL && optind < argc && argv[optind - 1][0] == '-') {
         optarg = argv[optind];

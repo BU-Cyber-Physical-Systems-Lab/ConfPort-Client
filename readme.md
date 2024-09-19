@@ -3,6 +3,8 @@
 A simple client to interact with a generic configuration port, which will read
 and write values by memory mapping `/dev/mem`.
 
+**NOTE:** Big endian settings are implemented but have not been tested on a big endian machine.
+
 ## Configure the client
 
 The configuration port client can be customised by modifying the content of
@@ -21,6 +23,7 @@ represented by the information at a specific index of these arrays:
 - `REG_NAME_ARR`: Name of the register used to address the register as a long
   option.
 - `REG_SIZE_ARR`: Size in bytes of the register.
+- `REG_RDONLY_ARR`: If the register at a specified address is readonly (`1`) or read-write (`0`).
 
 
 ## Example configuration
@@ -32,6 +35,7 @@ properties:
   `CONFPORT_BASE_ADDRESS`.
 - 5 registers, define by the value of `CONFPORT_REGS_NUM`.
 - A total size of 48 bytes, defined by `CONFPORT_SIZE_BYTE`.
+- All registers can be read and written as of `REG_RDONLY_ARR`.
 
 Registers are currently configured in this way, according to `ADDR_OFFSET_ARR`,
 `REG_NAME_ARR`, `REG_SIZE_ARR`:
