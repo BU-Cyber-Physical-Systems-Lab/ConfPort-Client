@@ -10,7 +10,62 @@
 
 #include "confport_client.h"
 
-/// Then name of the registers as an array
+#ifndef CONFPORT_BASE_ADDRESS
+#warning "Missing CONFPORT_BASE_ADDRESS!"
+#ifndef CONFPORT_CONFIG_ERR
+#define CONFPORT_CONFIG_ERR
+#endif
+#endif
+#ifndef CONFPORT_SIZE_BYTE
+#warning "Missing CONFPORT_SIZE_BYTE!"
+#ifndef CONFPORT_CONFIG_ERR
+#define CONFPORT_CONFIG_ERR
+#endif
+#endif
+#ifndef CONFPORT_REGS_NUM
+#warning "Missing CONFPORT_REGS_NUM!"
+#ifndef CONFPORT_CONFIG_ERR
+#define CONFPORT_CONFIG_ERR
+#endif
+#endif
+#ifndef REG_SIZE_ARR
+#warning "Missing REG_SIZE_ARR!"
+#ifndef CONFPORT_CONFIG_ERR
+#define CONFPORT_CONFIG_ERR
+#endif
+#endif
+#ifndef ADDR_OFFSET_ARR
+#warning "Missing ADDR_OFFSET_ARR!"
+#ifndef CONFPORT_CONFIG_ERR
+#define CONFPORT_CONFIG_ERR
+#endif
+#endif
+#ifndef REG_NAME_ARR
+#warning "Missing REG_NAME_ARR!"
+#ifndef CONFPORT_CONFIG_ERR
+#define CONFPORT_CONFIG_ERR
+#endif
+#endif
+#ifndef MEM_LITTLE_ENDIAN
+#warning "Missing MEM_LITTLE_ENDIAN!"
+#ifndef CONFPORT_CONFIG_ERR
+#define CONFPORT_CONFIG_ERR
+#endif
+#endif
+#ifndef REG_RDONLY_ARR
+#warning "Missing REG_RDONLY_ARR!"
+#ifndef CONFPORT_CONFIG_ERR
+#define CONFPORT_CONFIG_ERR
+#endif
+#endif
+#ifndef ADDRESSES_H
+#warning "Missing macro ADDRESSES_H, are you including an ok version of confport_client.h?"
+#endif
+#ifdef CONFPORT_CONFIG_ERR
+#error "Invalid confport configuration! Check confport_client.h"
+#endif
+
+/// The name of the registers as an array
 static char *reg_names[CONFPORT_REGS_NUM] = REG_NAME_ARR;
 /// The size of the registers in bytes
 static size_t reg_sizes[CONFPORT_REGS_NUM] = REG_SIZE_ARR;
@@ -67,6 +122,12 @@ typedef struct confport_t {
 struct confport_t *map_registers() {
   struct confport_t *confport = malloc(sizeof(confport_t));
   unsigned sizes[CONFPORT_REGS_NUM] = ADDR_OFFSET_ARR;
+  for (int i = 0; i < CONFPORT_REGS_NUM; i++) {
+    if (sizes[i] < 0) {
+      printf("Wrong value for ADDR_OFFSET_ARR[%d]: %d!\n", i, sizes[i]);
+      return NULL;
+    }
+  }
   if (confport == NULL) {
     perror("cannot allocate memory for confport");
     return NULL;
@@ -224,6 +285,37 @@ static inline void help(char *name) {
 }
 
 int main(int argc, char **argv) {
+  if (CONFPORT_REGS_NUM <= 0) {
+    printf(" Wrong value for CONFPORT_REGS_NUM: %d!\n", CONFPORT_REGS_NUM);
+    return EXIT_FAILURE;
+  }
+  if (CONFPORT_SIZE_BYTE <= 0) {
+    printf(" Wrong value for CONFPORT_SIZE_BYTE: %d!\n", CONFPORT_SIZE_BYTE);
+    return EXIT_FAILURE;
+  }
+  if (MEM_LITTLE_ENDIAN != 0 && MEM_LITTLE_ENDIAN != 1) {
+    printf(" Wrong value for MEM_LITTLE_ENDIAN: %d!\n", MEM_LITTLE_ENDIAN);
+    return EXIT_FAILURE;
+  }
+  if (CONFPORT_BASE_ADDRESS == 0x0) {
+    printf(" Wrong value for CONFPORT_BASE_ADDRESS: %d!\n",
+           CONFPORT_BASE_ADDRESS);
+    return EXIT_FAILURE;
+  }
+  for (int i = 0; i < CONFPORT_REGS_NUM; i++) {
+    if (reg_rdonly[i] != 0 && reg_rdonly[i] != 1) {
+      printf(" Wrong value for REG_RDONLY_ARR[%d]: %d!\n", i, reg_rdonly[i]);
+      return EXIT_FAILURE;
+    }
+    if (reg_sizes[i] <= 0) {
+      printf(" Wrong value for REG_SIZE_ARR[%d]: %ld!\n", i, reg_sizes[i]);
+      return EXIT_FAILURE;
+    }
+    if (strlen(reg_names[i]) == 0) {
+      printf(" Wrong value for REG_NAME_ARR[%d]: %s!\n", i, reg_names[i]);
+      return EXIT_FAILURE;
+    }
+  }
   static struct option long_options[CONFPORT_REGS_NUM + 2];
   int res = 0, empty = 1, opt;
   confport = map_registers();
